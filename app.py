@@ -13,9 +13,7 @@ import os
 import pickle
 import streamlit as st
 import pandas as pd
-from models.collaborative import CollaborativeFilter
-from models.content_based import ContentBasedFilter
-from models.hybrid import HybridRecommender
+
 
 sys.path.insert(0, os.path.dirname(__file__))
 
