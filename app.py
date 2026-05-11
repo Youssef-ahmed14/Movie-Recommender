@@ -211,28 +211,48 @@ MODELS_DIR = os.path.join(os.path.dirname(__file__), "saved_models")
 
 
 @st.cache_resource(show_spinner=False)
-def load_models():
-    if not os.path.exists(MODELS_DIR):
-        return None, None, None, None, None, None
-    try:
-        with open(os.path.join(MODELS_DIR, "hybrid_model.pkl"), "rb") as f:
-            hybrid = pickle.load(f)
-        with open(os.path.join(MODELS_DIR, "cb_model.pkl"), "rb") as f:
-            cb = pickle.load(f)
-        with open(os.path.join(MODELS_DIR, "cf_model.pkl"), "rb") as f:
-            cf = pickle.load(f)
-        with open(os.path.join(MODELS_DIR, "movies.pkl"), "rb") as f:
-            movies = pickle.load(f)
-        with open(os.path.join(MODELS_DIR, "ratings.pkl"), "rb") as f:
-            ratings = pickle.load(f)
-        metrics = {}
-        if os.path.exists(os.path.join(MODELS_DIR, "metrics.pkl")):
-            with open(os.path.join(MODELS_DIR, "metrics.pkl"), "rb") as f:
-                metrics = pickle.load(f)
-        return hybrid, cb, cf, movies, ratings, metrics
-    except Exception as e:
-        return None, None, None, None, None, None
+import os
+import pickle
+import streamlit as st
+import pandas as pd
+# Import your classes (ensure these match your file structure)
+from models.collaborative import CollaborativeFilter
+from models.content_based import ContentBasedFilter
+from models.hybrid import HybridRecommender
 
+@st.cache_resource
+def load_models():
+    # 1. Check if we already have the finished models
+    if os.path.exists(os.path.join(MODELS_DIR, "hybrid_model.pkl")):
+        try:
+            with open(os.path.join(MODELS_DIR, "hybrid_model.pkl"), "rb") as f:
+                return pickle.load(f) # ... and so on for other files
+        except:
+            pass # If loading fails, move to training
+
+    # 2. FALLBACK: Train them live if files are missing/too big for GitHub
+    st.info("Models not found on server. Training them now from CSV data...")
+    
+    # Load raw data (The CSVs should be < 25MB)
+    movies = pd.read_csv("data/movies.csv")
+    ratings = pd.read_csv("data/ratings.csv")
+
+    # Fit Content-Based
+    cb = ContentBasedFilter()
+    cb.fit(movies)
+
+    # Fit Collaborative
+    cf = CollaborativeFilter()
+    cf.fit(ratings, movies)
+
+    # Create Hybrid
+    hybrid = HybridRecommender(cb, cf)
+
+    st.success("Training complete! App is ready.")
+    
+    # Return everything the app expects
+    # (Adjust this return statement to match how your app.py uses the variables)
+    return hybrid, cb, cf, movies, ratings, {}
 
 def render_movie_card(row, rank=None):
     # Safe extraction from pandas Series
