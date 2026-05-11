@@ -9,6 +9,13 @@ import numpy as np
 import pickle
 import os
 import sys
+import os
+import pickle
+import streamlit as st
+import pandas as pd
+from models.collaborative import CollaborativeFilter
+from models.content_based import ContentBasedFilter
+from models.hybrid import HybridRecommender
 
 sys.path.insert(0, os.path.dirname(__file__))
 
@@ -211,14 +218,7 @@ MODELS_DIR = os.path.join(os.path.dirname(__file__), "saved_models")
 
 
 @st.cache_resource(show_spinner=False)
-import os
-import pickle
-import streamlit as st
-import pandas as pd
-# Import your classes (ensure these match your file structure)
-from models.collaborative import CollaborativeFilter
-from models.content_based import ContentBasedFilter
-from models.hybrid import HybridRecommender
+
 
 @st.cache_resource
 def load_models():
